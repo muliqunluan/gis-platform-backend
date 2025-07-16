@@ -1,7 +1,8 @@
 // src/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { IsEmail, Length } from 'class-validator';
+import { UserRole } from './user-role.entity'; // 引入中间表
 
 @Entity()
 export class User {
@@ -10,25 +11,28 @@ export class User {
 
   @Column({ unique: true })
   @IsEmail()
-  email: string;  // 用户的邮箱，登录时的唯一标识
+  email: string;
 
   @Column()
   @Length(6, 20)
-  password_hash: string;  // 加密后的密码
+  password_hash: string;
 
   @Column({ nullable: true })
-  first_name: string;  // 用户的名字（可选）
+  first_name: string;
 
   @Column({ nullable: true })
-  last_name: string;  // 用户的姓氏（可选）
+  last_name: string;
 
   @Column({ default: true })
-  is_active: boolean;  // 用户是否激活，默认是激活
+  is_active: boolean;
+
+  // 多对多关系：用户和角色
+  @OneToMany(() => UserRole, userRole => userRole.user)
+  roles: UserRole[];
 
   @BeforeInsert()
   async hashPassword() {
     if (this.password_hash) {
-      // 使用 bcrypt 加密密码
       this.password_hash = await bcrypt.hash(this.password_hash, 10);
     }
   }

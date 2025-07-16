@@ -2,23 +2,38 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { User } from './entities/user.entity';
-import { AuthModule } from './auth/auth.module'; // ✅ 引入
+import { User } from './entities/user.entity'; // 用户实体
+import { Role } from './entities/role.entity'; // 角色实体
+import { Permission } from './entities/permission.entity'; // 权限实体
+import { UserRole } from './entities/user-role.entity'; // 用户角色关联表
+import { RolePermission } from './entities/role-permission.entity'; // 角色权限关联表
+import { RoleManagementModule } from './role-management/role-management.module';
+import { AuthModule } from './auth/auth.module'; // 引入Auth模块
+import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
+
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot(),  // 加载配置文件
     TypeOrmModule.forRoot({
-      type: 'postgres',
+      type: 'postgres',  // 使用PostgreSQL数据库
       host: 'localhost',
       port: 5432,
-      username: process.env.PG_USERNAME,
-      password: process.env.PG_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: [User],
-      synchronize: true,
+      username: process.env.PG_USERNAME,  // 数据库用户名
+      password: process.env.PG_PASSWORD,  // 数据库密码
+      database: process.env.DB_NAME,  // 数据库名称
+      entities: [
+        User,        // 用户实体
+        Role,        // 角色实体
+        Permission,  // 权限实体
+        UserRole,    // 用户角色关联表
+        RolePermission // 角色权限关联表
+      ],  
+      synchronize: true,  // 自动同步数据库（开发时使用）
     }),
-    AuthModule, // ✅ 必须导入，控制器才能生效
-  ],
+    AuthModule,  // 导入认证模块
+    CommandModule,
+    RoleManagementModule,
+  ]
 })
 export class AppModule {}
