@@ -10,7 +10,9 @@ import { RolePermission } from './entities/role-permission.entity'; // 角色权
 import { RoleManagementModule } from './role-management/role-management.module';
 import { AuthModule } from './auth/auth.module'; // 引入Auth模块
 import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
-
+import { UserController } from './user/user.controller';
+import { RolesController } from './roles/roles.controller';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -34,6 +36,9 @@ import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
     AuthModule,  // 导入认证模块
     CommandModule,
     RoleManagementModule,
-  ]
+    TypeOrmModule.forFeature([User, Role, UserRole]),
+    UserModule
+  ],
+  controllers:[UserController, RolesController]
 })
 export class AppModule {}

@@ -24,20 +24,37 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
+    const user = await this.userRepo.findOne({
+      where: { email },
+      relations: ['roles', 'roles.role'], // 级联加载 UserRole 和 Role
+    });
+
     if (!user) return null;
+
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return null;
+
     return user;
   }
+
 
   async login(email: string, password: string) {
     const user = await this.validateUser(email, password);
     if (!user) throw new Error('Invalid credentials');
 
-    const payload = { email: user.email, sub: user.id };
+    // 提取角色名称（如 ["admin", "user"]）
+    const roleNames = user.roles.map(ur => ur.role.name);
+    console.log(roleNames)
+
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      roles: roleNames,
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
+
 }
