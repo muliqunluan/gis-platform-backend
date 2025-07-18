@@ -40,8 +40,8 @@
 
 ### 系统要求
 - Node.js 18+
-- PostgreSQL 12+ (推荐 14+ 并安装 PostGIS 扩展)
-- (可选) Redis 6+ (如需缓存层)
+- PostgreSQL 12+
+
 
 ### 安装步骤
 
