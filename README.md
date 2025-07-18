@@ -43,8 +43,8 @@
 # 安装依赖
 yarn install
 
-# 配置环境变量 (复制示例文件)
+# 配置环境变量
 cp .env.example .env
 
-# 启动开发服务器 (带热重载)
+# 启动开发服务器
 yarn start:dev
