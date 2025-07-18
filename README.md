@@ -27,12 +27,6 @@
 - **认证**: @nestjs/jwt
 - **加密**: bcryptjs 3.x
 
-### 开发工具链
-- **测试框架**: Jest 29.x
-- **E2E测试**: supertest 7.x
-- **调试支持**: source-map-support
-- **类型系统**: TypeScript 5.x
-
 ### 基础设施
 - **配置管理**: @nestjs/config
 
