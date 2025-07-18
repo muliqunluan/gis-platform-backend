@@ -13,6 +13,10 @@ import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
 import { UserController } from './user/user.controller';
 import { RolesController } from './roles/roles.controller';
 import { UserModule } from './user/user.module';
+import { Map } from './entities/map.entity';
+import { Group } from './entities/group.entity';
+import { UserGroup } from './entities/user-group.entity';
+import { Layer } from './entities/layer.entity';
 
 @Module({
   imports: [
@@ -29,7 +33,11 @@ import { UserModule } from './user/user.module';
         Role,        // 角色实体
         Permission,  // 权限实体
         UserRole,    // 用户角色关联表
-        RolePermission // 角色权限关联表
+        RolePermission, // 角色权限关联表
+        Map,         // 地图实体
+        Group,       // 群组实体
+        UserGroup,   // 用户群组实体 
+        Layer        // 图层实体 
       ],  
       synchronize: true,  // 自动同步数据库（开发时使用）
     }),
