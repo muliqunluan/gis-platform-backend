@@ -13,6 +13,7 @@ import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
 import { UserController } from './user/user.controller';
 import { RolesController } from './roles/roles.controller';
 import { UserModule } from './user/user.module';
+import { UserProfileModule } from './user-profile/user-profile.module';
 import { Map } from './entities/map.entity';
 import { Group } from './entities/group.entity';
 import { UserGroup } from './entities/user-group.entity';
@@ -45,7 +46,8 @@ import { Layer } from './entities/layer.entity';
     CommandModule,
     RoleManagementModule,
     TypeOrmModule.forFeature([User, Role, UserRole]),
-    UserModule
+    UserModule,
+    UserProfileModule
   ],
   controllers:[UserController, RolesController]
 })
