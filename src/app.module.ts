@@ -14,6 +14,7 @@ import { UserController } from './user/user.controller';
 import { RolesController } from './roles/roles.controller';
 import { UserModule } from './user/user.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
+import { MapModule } from './map/map.module';
 import { Map } from './entities/map.entity';
 import { Group } from './entities/group.entity';
 import { UserGroup } from './entities/user-group.entity';
@@ -47,7 +48,8 @@ import { Layer } from './entities/layer.entity';
     RoleManagementModule,
     TypeOrmModule.forFeature([User, Role, UserRole]),
     UserModule,
-    UserProfileModule
+    UserProfileModule,
+    MapModule
   ],
   controllers:[UserController, RolesController]
 })
