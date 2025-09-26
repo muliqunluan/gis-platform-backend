@@ -25,16 +25,16 @@ export class MapController {
     return this.mapService.createMap(createMapDto, userId);
   }
 
+  @Get('public')
+  async getPublicMaps() {
+    return this.mapService.getPublicMaps();
+  }
+
   @Get('my')
   @UseGuards(JwtAuthGuard)
   async getMyMaps(@Request() req) {
     const userId = req.user.id;
     return this.mapService.getUserMaps(userId);
-  }
-
-  @Get('public')
-  async getPublicMaps() {
-    return this.mapService.getPublicMaps();
   }
 
   @Get(':id')

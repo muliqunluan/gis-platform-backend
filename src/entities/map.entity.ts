@@ -40,8 +40,8 @@ export class Map {
   @OneToMany(() => Layer, layer => layer.map)
   layers: Layer[];
 
-  @OneToOne(() => Group, group => group.map)
-  group: Group;
+  @ManyToOne(() => Group, group => group.maps, { nullable: true })
+  group: Group | null;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

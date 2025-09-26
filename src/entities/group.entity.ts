@@ -14,8 +14,8 @@ export class Group {
   @Column({ nullable: true })
   description: string;
 
-  @OneToOne(() => Map, map => map.group)
-  map: Map;
+  @OneToMany(() => Map, map => map.group)
+  maps: Map[];
 
   @OneToMany(() => UserGroup, userGroup => userGroup.group)
   userGroups: UserGroup[];
