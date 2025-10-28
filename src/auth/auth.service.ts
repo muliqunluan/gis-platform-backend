@@ -1,5 +1,5 @@
 // src/auth/auth.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
@@ -40,8 +40,10 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.validateUser(email, password);
-    if (!user) throw new Error('Invalid credentials');
-
+    if (!user) {
+      throw new UnauthorizedException('用户名或密码错误');
+    }
+    
     // 提取角色名称（如 ["admin", "user"]）
     const roleNames = user.roles.map(ur => ur.role.name);
     console.log(roleNames)
