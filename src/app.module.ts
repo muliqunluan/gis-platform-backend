@@ -15,6 +15,7 @@ import { RolesController } from './roles/roles.controller';
 import { UserModule } from './user/user.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
 import { MapModule } from './map/map.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import { Map } from './entities/map.entity';
 import { Group } from './entities/group.entity';
 import { UserGroup } from './entities/user-group.entity';
@@ -38,14 +39,15 @@ import { Layer } from './entities/layer.entity';
         RolePermission, // 角色权限关联表
         Map,         // 地图实体
         Group,       // 群组实体
-        UserGroup,   // 用户群组实体 
-        Layer        // 图层实体 
-      ],  
+        UserGroup,   // 用户群组实体
+        Layer        // 图层实体
+      ],
       synchronize: true,  // 自动同步数据库（开发时使用）
     }),
     AuthModule,  // 导入认证模块
     CommandModule,
     RoleManagementModule,
+    PermissionsModule,  // 导入权限模块
     TypeOrmModule.forFeature([User, Role, UserRole]),
     UserModule,
     UserProfileModule,

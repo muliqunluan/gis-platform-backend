@@ -1,11 +1,15 @@
 // src/user/user.controller.ts
-import { Controller, Get, Param, NotFoundException, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, Patch, Body, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { Role } from '../entities/role.entity';
 import { UserService } from './user.service';
+import { PoliciesGuard } from '../permissions/guards/policies.guard';
+import { CheckPolicies } from '../permissions/decorators/policies.decorator';
+import { Policies } from '../permissions/decorators/policies.decorator';
+
 @Controller('users')
 export class UserController {
   constructor(
@@ -17,6 +21,8 @@ export class UserController {
   ) {}
 
   @Get(':email/roles')
+  @UseGuards(PoliciesGuard)
+  @CheckPolicies(Policies.canRead('User'))
   async getUserRoles(@Param('email') email: string) {
     const user = await this.userRepo.findOne({ where: { email } });
     if (!user) throw new NotFoundException('User not found');
@@ -30,6 +36,8 @@ export class UserController {
   }
 
   @Patch(':email/roles')
+  @UseGuards(PoliciesGuard)
+  @CheckPolicies(Policies.canUpdate('User'))
   async updateUserRoles(
     @Param('email') email: string,
     @Body() body: { roles: string[] }
