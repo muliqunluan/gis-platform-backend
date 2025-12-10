@@ -9,6 +9,7 @@ import { UserGroup } from '../entities/user-group.entity';
 import { User } from '../entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
       secret: 'jwt_secret', // 与auth模块保持一致
       signOptions: { expiresIn: '7d' },
     }),
+    PermissionsModule, // 导入PermissionsModule以访问PoliciesGuard
   ],
   controllers: [MapController],
   providers: [MapService, JwtAuthGuard],

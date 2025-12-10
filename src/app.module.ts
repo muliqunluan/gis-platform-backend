@@ -11,11 +11,11 @@ import { RoleManagementModule } from './role-management/role-management.module';
 import { AuthModule } from './auth/auth.module'; // 引入Auth模块
 import { CommandModule } from 'nestjs-command'; // ✅ 导入 CommandModule
 import { UserController } from './user/user.controller';
-import { RolesController } from './roles/roles.controller';
 import { UserModule } from './user/user.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
 import { MapModule } from './map/map.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { RolesModule } from './roles/roles.module';
 import { Map } from './entities/map.entity';
 import { Group } from './entities/group.entity';
 import { UserGroup } from './entities/user-group.entity';
@@ -51,8 +51,9 @@ import { Layer } from './entities/layer.entity';
     TypeOrmModule.forFeature([User, Role, UserRole]),
     UserModule,
     UserProfileModule,
-    MapModule
+    MapModule,
+    RolesModule
   ],
-  controllers:[UserController, RolesController]
+  controllers:[UserController]
 })
 export class AppModule {}
