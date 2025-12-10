@@ -20,7 +20,17 @@ export class AuthService {
 
     const user = this.userRepo.create({ email, password_hash: password, first_name, last_name });
     await this.userRepo.save(user);
-    return { message: 'Registration successful' };
+    
+    // 注册成功后自动登录
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      roles: [], // 新用户默认没有角色
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
   async validateUser(email: string, password: string) {
@@ -59,4 +69,18 @@ export class AuthService {
     };
   }
 
+  async getUserById(id: number) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['roles', 'roles.role'],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    // 不返回密码哈希
+    const { password_hash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
 }
