@@ -69,16 +69,21 @@ export class MapService {
     const mapData: Partial<Map> = {
       name: createMapDto.name,
       type: createMapDto.type,
-      bounds: createMapDto.bounds ? {
-        minLng: createMapDto.bounds[0],
-        minLat: createMapDto.bounds[1],
-        maxLng: createMapDto.bounds[2],
-        maxLat: createMapDto.bounds[3],
+      metadata: createMapDto.bounds ? {
+        bounds: {
+          minLng: createMapDto.bounds[0],
+          minLat: createMapDto.bounds[1],
+          maxLng: createMapDto.bounds[2],
+          maxLat: createMapDto.bounds[3],
+        },
+        zoomRange: createMapDto.zoomRange,
+        projection: createMapDto.projection,
+        defaultZoom: createMapDto.defaultZoom,
+        extent: createMapDto.extent,
       } : undefined,
-      zoomRange: createMapDto.zoomRange,
-      isPublic: createMapDto.isPublic,
+      is_public: createMapDto.isPublic,
       owner: user,
-      group: savedGroup,
+      group: savedGroup || undefined,
     };
 
     const map = this.mapRepository.create(mapData);
@@ -95,15 +100,15 @@ export class MapService {
     return this.mapRepository.find({
       where: { owner: { id: userId } },
       relations: ['group', 'layers'],
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
   }
 
   async getPublicMaps() {
     return this.mapRepository.find({
-      where: { isPublic: true },
+      where: { is_public: true },
       relations: ['owner', 'group'],
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
   }
 
@@ -112,6 +117,21 @@ export class MapService {
       where: { id },
       relations: ['owner', 'group', 'layers'],
     });
+  }
+
+  async checkMapOwnership(mapId: number, userId: number): Promise<boolean> {
+    const map = await this.mapRepository.findOne({
+      where: { id: mapId, owner: { id: userId } },
+    });
+    return !!map;
+  }
+
+  async isMapPublic(mapId: number): Promise<boolean> {
+    const map = await this.mapRepository.findOne({
+      where: { id: mapId },
+      select: ['is_public'],
+    });
+    return map?.is_public || false;
   }
 
   async deleteMap(id: number, userId: number) {

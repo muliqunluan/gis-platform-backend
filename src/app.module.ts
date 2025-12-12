@@ -8,6 +8,11 @@ import { User } from './entities/user.entity';
 import { Map } from './entities/map.entity';
 import { Layer } from './entities/layer.entity';
 import { Group } from './entities/group.entity';
+import { UserGroup } from './entities/user-group.entity';
+import { Permission } from './entities/permission.entity';
+import { RolePermission } from './entities/role-permission.entity';
+import { Role } from './entities/role.entity';
+import { UserRole } from './entities/user-role.entity';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { MapModule } from './map/map.module';
@@ -29,7 +34,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
         username: configService.get('database.username'),
         password: configService.get('database.password'),
         database: configService.get('database.database'),
-        entities: [User, Map, Layer, Group],
+        entities: [User, Map, Layer, Group, UserGroup, Permission, RolePermission, Role, UserRole],
         synchronize: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],

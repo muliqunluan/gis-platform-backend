@@ -36,7 +36,6 @@ export class AuthService {
   async validateUser(email: string, password: string) {
     const user = await this.userRepo.findOne({
       where: { email },
-      relations: ['roles', 'roles.role'], // 级联加载 UserRole 和 Role
     });
 
     if (!user) return null;
@@ -54,8 +53,8 @@ export class AuthService {
       throw new UnauthorizedException('用户名或密码错误');
     }
     
-    // 提取角色名称（如 ["admin", "user"]）
-    const roleNames = user.roles.map(ur => ur.role.name);
+    // 用户角色现在直接存储在roles数组中
+    const roleNames = user.roles || [];
     console.log(roleNames)
 
     const payload = {
@@ -72,7 +71,6 @@ export class AuthService {
   async getUserById(id: number) {
     const user = await this.userRepo.findOne({
       where: { id },
-      relations: ['roles', 'roles.role'],
     });
 
     if (!user) {

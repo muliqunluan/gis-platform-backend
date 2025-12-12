@@ -4,6 +4,8 @@ import * as bcrypt from 'bcryptjs';
 import { IsEmail, Length } from 'class-validator';
 import { Map } from './map.entity';
 import { Group } from './group.entity';
+import { UserGroup } from './user-group.entity';
+import { UserRole } from './user-role.entity';
 
 @Entity()
 export class User {
@@ -36,6 +38,12 @@ export class User {
 
   @OneToMany(() => Map, map => map.owner)
   maps: Map[];
+
+  @OneToMany(() => UserGroup, userGroup => userGroup.user)
+  userGroups: UserGroup[];
+
+  @OneToMany(() => UserRole, userRole => userRole.user)
+  userRoles: UserRole[];
 
   @BeforeInsert()
   async hashPassword() {

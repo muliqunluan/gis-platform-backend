@@ -36,7 +36,7 @@ export class MapController {
 
   @Get('my')
   @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies(Policies.canRead('Map'))
+  @CheckPolicies(Policies.canReadOwnResource('Map'))
   async getMyMaps(@Request() req) {
     const userId = req.user.id;
     return this.mapService.getUserMaps(userId);
@@ -51,7 +51,7 @@ export class MapController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies(Policies.canDelete('Map'))
+  @CheckPolicies(Policies.canDeleteOwnResource('Map'))
   async deleteMap(@Param('id', ParseIntPipe) id: number, @Request() req) {
     const userId = req.user.id;
     return this.mapService.deleteMap(id, userId);
