@@ -24,6 +24,7 @@ export class JwtAuthGuard implements CanActivate {
       request.user = payload;
       return true;
     } catch (error) {
+      console.error('JWT验证失败:', error);
       throw new UnauthorizedException('认证令牌无效或已过期');
     }
   }

@@ -6,7 +6,6 @@ import { Role } from '../entities/role.entity';
 import { Permission } from '../entities/permission.entity';
 import { RolePermission } from '../entities/role-permission.entity';
 import { User } from '../entities/user.entity';
-import { UserRole } from '../entities/user-role.entity';
 
 @Injectable()
 export class RolesService {
@@ -22,9 +21,6 @@ export class RolesService {
 
     @InjectRepository(User)
     private userRepository: Repository<User>,
-
-    @InjectRepository(UserRole)
-    private userRoleRepository: Repository<UserRole>,
   ) {}
 
   // 获取所有角色
@@ -146,12 +142,14 @@ export class RolesService {
 
   // 获取拥有指定角色的所有用户
   async getUsersWithRole(roleId: number): Promise<User[]> {
-    const userRoles = await this.userRoleRepository.find({
-      where: { role: { id: roleId } },
-      relations: ['user'],
-    });
+    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
 
-    return userRoles.map(ur => ur.user);
+    // 查找所有包含该角色名称的用户
+    const users = await this.userRepository.find();
+    return users.filter(user => user.roles && user.roles.includes(role.name));
   }
 
   // 通过邮箱为用户分配角色
@@ -166,16 +164,17 @@ export class RolesService {
       throw new NotFoundException(`Role ${roleName} not found`);
     }
 
-    const existingUserRole = await this.userRoleRepository.findOne({
-      where: { user: { id: user.id }, role: { id: role.id } },
-    });
-
-    if (existingUserRole) {
+    // 检查用户是否已有该角色
+    if (user.roles && user.roles.includes(roleName)) {
       return `User ${email} already has role ${roleName}`;
     }
 
-    const userRole = this.userRoleRepository.create({ user, role });
-    await this.userRoleRepository.save(userRole);
+    // 添加角色到用户的roles数组
+    if (!user.roles) {
+      user.roles = [];
+    }
+    user.roles.push(roleName);
+    await this.userRepository.save(user);
 
     return `Role ${roleName} successfully assigned to user ${email}`;
   }
@@ -192,15 +191,14 @@ export class RolesService {
       throw new NotFoundException(`Role ${roleName} not found`);
     }
 
-    const existingUserRole = await this.userRoleRepository.findOne({
-      where: { user: { id: user.id }, role: { id: role.id } },
-    });
-
-    if (!existingUserRole) {
+    // 检查用户是否有该角色
+    if (!user.roles || !user.roles.includes(roleName)) {
       return `User ${email} does not have role ${roleName}`;
     }
 
-    await this.userRoleRepository.remove(existingUserRole);
+    // 从用户的roles数组中移除角色
+    user.roles = user.roles.filter(r => r !== roleName);
+    await this.userRepository.save(user);
 
     return `Role ${roleName} successfully removed from user ${email}`;
   }

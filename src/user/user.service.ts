@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
-import { UserRole } from '../entities/user-role.entity';
 import { Group } from '../entities/group.entity';
 import { UserGroup } from '../entities/user-group.entity';
 import { In } from 'typeorm';
@@ -18,9 +17,6 @@ export class UserService {
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
 
-    @InjectRepository(UserRole)
-    private userRoleRepository: Repository<UserRole>,
-
     @InjectRepository(Group)
     private groupRepository: Repository<Group>,
 
@@ -32,7 +28,7 @@ export class UserService {
   async findById(id: number): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['roles', 'roles.role', 'userGroups', 'userGroups.group'],
+      relations: ['userGroups', 'userGroups.group'],
     });
 
     if (!user) {
@@ -46,15 +42,14 @@ export class UserService {
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
-      relations: ['roles', 'roles.role', 'userGroups', 'userGroups.group'],
+      relations: ['userGroups', 'userGroups.group'],
     });
   }
 
   // 更新用户角色
   async updateUserRoles(email: string, roles: string[]) {
-    const user = await this.userRepository.findOne({ 
-      where: { email },
-      relations: ['roles', 'roles.role']
+    const user = await this.userRepository.findOne({
+      where: { email }
     });
 
     if (!user) {
@@ -70,14 +65,9 @@ export class UserService {
       throw new NotFoundException('Some roles not found');
     }
 
-    // 删除用户原有角色
-    await this.userRoleRepository.delete({ user });
-
-    // 给用户添加新的角色
-    for (const role of roleEntities) {
-      const userRole = this.userRoleRepository.create({ user, role });
-      await this.userRoleRepository.save(userRole);
-    }
+    // 直接更新用户的roles数组
+    user.roles = roles;
+    await this.userRepository.save(user);
 
     return this.findById(user.id);
   }
@@ -94,14 +84,17 @@ export class UserService {
       throw new NotFoundException(`Role ${roleName} not found.`);
     }
 
-    const existingUserRole = await this.findUserRole(user, role);
-
-    if (existingUserRole) {
+    // 检查用户是否已有该角色
+    if (user.roles && user.roles.includes(roleName)) {
       return `User already has the ${roleName} role.`;
     }
 
-    const userRole = this.userRoleRepository.create({ user, role });
-    await this.userRoleRepository.save(userRole);
+    // 添加角色到用户的roles数组
+    if (!user.roles) {
+      user.roles = [];
+    }
+    user.roles.push(roleName);
+    await this.userRepository.save(user);
 
     return `Role ${roleName} successfully assigned to ${email}.`;
   }
@@ -118,13 +111,14 @@ export class UserService {
       throw new NotFoundException(`Role ${roleName} not found.`);
     }
 
-    const existingUserRole = await this.findUserRole(user, role);
-
-    if (!existingUserRole) {
+    // 检查用户是否有该角色
+    if (!user.roles || !user.roles.includes(roleName)) {
       return `User does not have the ${roleName} role.`;
     }
 
-    await this.userRoleRepository.remove(existingUserRole);
+    // 从用户的roles数组中移除角色
+    user.roles = user.roles.filter(r => r !== roleName);
+    await this.userRepository.save(user);
 
     return `Role ${roleName} successfully removed from ${email}.`;
   }
@@ -178,22 +172,13 @@ export class UserService {
 
   // 获取用户的所有角色名称
   async getUserRoleNames(userId: number): Promise<string[]> {
-    const userRoles = await this.userRoleRepository.find({
-      where: { user: { id: userId } },
-      relations: ['role'],
-    });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
 
-    return userRoles.map(ur => ur.role.name);
-  }
-
-  // 查找用户角色关联的私有方法
-  private async findUserRole(user: User, role: Role): Promise<UserRole | null> {
-    return this.userRoleRepository.findOne({
-      where: {
-        user: { id: user.id },
-        role: { id: role.id },
-      },
-    });
+    return user.roles || [];
   }
 
   // 查找用户群组关联的私有方法

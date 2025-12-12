@@ -7,12 +7,11 @@ import { Role } from '../entities/role.entity';
 import { Permission } from '../entities/permission.entity';
 import { RolePermission } from '../entities/role-permission.entity';
 import { User } from '../entities/user.entity';
-import { UserRole } from '../entities/user-role.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Role, Permission, RolePermission, User, UserRole]),
+    TypeOrmModule.forFeature([Role, Permission, RolePermission, User]),
     AuthModule,
   ],
   controllers: [RolesController],

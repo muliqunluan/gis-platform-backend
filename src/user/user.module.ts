@@ -5,14 +5,13 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
-import { UserRole } from '../entities/user-role.entity';
 import { Group } from '../entities/group.entity';
 import { UserGroup } from '../entities/user-group.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role, UserRole, Group, UserGroup]),
+    TypeOrmModule.forFeature([User, Role, Group, UserGroup]),
     AuthModule,
   ],
   controllers: [UserController],
