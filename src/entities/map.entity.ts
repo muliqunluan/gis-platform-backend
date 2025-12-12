@@ -1,13 +1,7 @@
 // src/entities/map.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 import { Layer } from './layer.entity';
-import { Group } from './group.entity';
-
-export enum MapType {
-  OPENLAYERS_GAODE = 'openlayers_gaode',
-  GAME = 'game'
-}
 
 @Entity()
 export class Map {
@@ -17,22 +11,14 @@ export class Map {
   @Column()
   name: string;
 
-  @Column({ type: 'enum', enum: MapType })
-  type: MapType;
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
-  @Column('json', { nullable: true })
-  bounds: { // 高德地图范围
-    minLng: number;
-    minLat: number;
-    maxLng: number;
-    maxLat: number;
-  };
+  @Column({ default: true })
+  is_public: boolean;
 
-  @Column('simple-array', { nullable: true })
-  zoomRange: number[]; // 缩放范围 [min, max]
-
-  @Column({ default: false })
-  isPublic: boolean; // 是否公开到地图广场
+  @Column({ type: 'json', nullable: true })
+  metadata: any;
 
   @ManyToOne(() => User, user => user.maps)
   owner: User;
@@ -40,9 +26,9 @@ export class Map {
   @OneToMany(() => Layer, layer => layer.map)
   layers: Layer[];
 
-  @ManyToOne(() => Group, group => group.maps, { nullable: true })
-  group: Group | null;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  updated_at: Date;
 }

@@ -2,9 +2,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { IsEmail, Length } from 'class-validator';
-import { UserRole } from './user-role.entity'; // 引入中间表
 import { Map } from './map.entity';
-import { UserGroup } from './user-group.entity';
+import { Group } from './group.entity';
 
 @Entity()
 export class User {
@@ -28,15 +27,15 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
-  // 多对多关系：用户和角色
-  @OneToMany(() => UserRole, userRole => userRole.user)
-  roles: UserRole[];
+  // 简化的角色存储 - 直接存储角色数组，避免中间表
+  @Column({
+    type: 'simple-array',
+    default: ['viewer']
+  })
+  roles: string[];
 
   @OneToMany(() => Map, map => map.owner)
   maps: Map[];
-
-  @OneToMany(() => UserGroup, userGroup => userGroup.user)
-  userGroups: UserGroup[];
 
   @BeforeInsert()
   async hashPassword() {
