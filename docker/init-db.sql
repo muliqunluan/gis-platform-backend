@@ -1,0 +1,165 @@
+-- PostgreSQL 数据库初始化脚本
+-- 这个脚本会在 PostgreSQL 容器首次启动时自动执行
+
+-- 创建数据库扩展
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 创建用户表（如果不存在）
+CREATE TABLE IF NOT EXISTS "user" (
+    "id" SERIAL PRIMARY KEY,
+    "email" VARCHAR(255) UNIQUE NOT NULL,
+    "password_hash" VARCHAR(255) NOT NULL,
+    "first_name" VARCHAR(100),
+    "last_name" VARCHAR(100),
+    "is_active" BOOLEAN DEFAULT true,
+    "roles" TEXT[] DEFAULT ARRAY['viewer'],
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建角色表（如果不存在）
+CREATE TABLE IF NOT EXISTS "role" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(50) UNIQUE NOT NULL,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建权限表（如果不存在）
+CREATE TABLE IF NOT EXISTS "permission" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100) UNIQUE NOT NULL,
+    "action" VARCHAR(50) NOT NULL,
+    "resource" VARCHAR(100) NOT NULL,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建角色权限关联表（如果不存在）
+CREATE TABLE IF NOT EXISTS "role_permission" (
+    "id" SERIAL PRIMARY KEY,
+    "role_id" INTEGER REFERENCES "role"("id") ON DELETE CASCADE,
+    "permission_id" INTEGER REFERENCES "permission"("id") ON DELETE CASCADE,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(role_id, permission_id)
+);
+
+-- 创建地图表（如果不存在）
+CREATE TABLE IF NOT EXISTS "map" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "center_lat" DECIMAL(10, 8),
+    "center_lng" DECIMAL(11, 8),
+    "zoom" INTEGER DEFAULT 10,
+    "created_by" INTEGER REFERENCES "user"("id"),
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建图层表（如果不存在）
+CREATE TABLE IF NOT EXISTS "layer" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "type" VARCHAR(50) NOT NULL,
+    "source_url" TEXT,
+    "visibility" BOOLEAN DEFAULT true,
+    "opacity" DECIMAL(3, 2) DEFAULT 1.0,
+    "map_id" INTEGER REFERENCES "map"("id") ON DELETE CASCADE,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建组表（如果不存在）
+CREATE TABLE IF NOT EXISTS "group" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "created_by" INTEGER REFERENCES "user"("id"),
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建用户组关联表（如果不存在）
+CREATE TABLE IF NOT EXISTS "user_group" (
+    "id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER REFERENCES "user"("id") ON DELETE CASCADE,
+    "group_id" INTEGER REFERENCES "group"("id") ON DELETE CASCADE,
+    "role" VARCHAR(50) DEFAULT 'member',
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, group_id)
+);
+
+-- 创建索引以提高查询性能
+CREATE INDEX IF NOT EXISTS "idx_user_email" ON "user"("email");
+CREATE INDEX IF NOT EXISTS "idx_user_roles" ON "user" USING GIN("roles");
+CREATE INDEX IF NOT EXISTS "idx_role_name" ON "role"("name");
+CREATE INDEX IF NOT EXISTS "idx_permission_name" ON "permission"("name");
+CREATE INDEX IF NOT EXISTS "idx_map_created_by" ON "map"("created_by");
+CREATE INDEX IF NOT EXISTS "idx_layer_map_id" ON "layer"("map_id");
+CREATE INDEX IF NOT EXISTS "idx_group_created_by" ON "group"("created_by");
+CREATE INDEX IF NOT EXISTS "idx_user_group_user_id" ON "user_group"("user_id");
+CREATE INDEX IF NOT EXISTS "idx_user_group_group_id" ON "user_group"("group_id");
+
+-- 插入默认角色
+INSERT INTO "role" ("name") VALUES 
+    ('admin'),
+    ('editor'),
+    ('viewer')
+ON CONFLICT ("name") DO NOTHING;
+
+-- 插入默认权限
+INSERT INTO "permission" ("name", "action", "resource") VALUES 
+    ('create-map', 'create', 'map'),
+    ('read-map', 'read', 'map'),
+    ('update-map', 'update', 'map'),
+    ('delete-map', 'delete', 'map'),
+    ('create-layer', 'create', 'layer'),
+    ('read-layer', 'read', 'layer'),
+    ('update-layer', 'update', 'layer'),
+    ('delete-layer', 'delete', 'layer'),
+    ('manage-users', 'manage', 'users'),
+    ('manage-roles', 'manage', 'roles')
+ON CONFLICT ("name") DO NOTHING;
+
+-- 为角色分配权限
+-- 管理员拥有所有权限
+INSERT INTO "role_permission" ("role_id", "permission_id")
+SELECT r.id, p.id 
+FROM "role" r, "permission" p 
+WHERE r.name = 'admin'
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- 编辑者拥有地图和图层的读写权限
+INSERT INTO "role_permission" ("role_id", "permission_id")
+SELECT r.id, p.id 
+FROM "role" r, "permission" p 
+WHERE r.name = 'editor' 
+AND p.action IN ('create', 'read', 'update', 'delete')
+AND p.resource IN ('map', 'layer')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- 查看者只有读权限
+INSERT INTO "role_permission" ("role_id", "permission_id")
+SELECT r.id, p.id 
+FROM "role" r, "permission" p 
+WHERE r.name = 'viewer' 
+AND p.action = 'read'
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- 创建更新时间触发器函数
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 为所有需要的表添加更新时间触发器
+CREATE TRIGGER update_user_updated_at BEFORE UPDATE ON "user" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_role_updated_at BEFORE UPDATE ON "role" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_permission_updated_at BEFORE UPDATE ON "permission" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_map_updated_at BEFORE UPDATE ON "map" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_layer_updated_at BEFORE UPDATE ON "layer" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_group_updated_at BEFORE UPDATE ON "group" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
